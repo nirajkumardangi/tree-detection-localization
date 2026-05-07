@@ -1,148 +1,116 @@
-# Tree Detection and Localization Scenario
+# Tree Detection and Localization Challenge
 
-## Overview
+## Background
 
-Build a self-contained tree detection and localization prototype using open, synthetic, or contributor-created imagery.
+[FloCard](https://flocard.app) is a sustainability-focused digital platform that combines digital identity, community engagement, climate action, and nature-based project tools. The platform supports businesses, communities, and sustainability initiatives through features such as digital business cards, sustainability profiles, carbon offsetting, project development, and tools aligned with climate and SDG goals.
 
-This scenario should identify visible trees in images and produce reviewable localization outputs such as bounding boxes or segmentation masks. It should not depend on any internal Canopy system, private field imagery, or proprietary model pipeline.
+FloCard also has a Tree Planters App used by communities, planters, and farms working on afforestation projects.
 
-## What Problem It Solves
+The app helps users digitally tag and trace trees using:
 
-Tree analytics workflows often need to isolate individual trees before any downstream species, health, condition, or inventory analysis can happen. This scenario explores a practical public-safe pipeline for detecting and localizing trees in single-tree and multi-tree images.
+- geo-tagged single tree images
+- Google Map based boundary tagging for clusters of trees or forest areas
+- mobile app or mobile browser based field capture
+- offline capture support for areas with low or no internet connectivity
 
-The goal is not to build a production forestry inventory system. The goal is to create a limited-scope reference implementation for tree detection, localization metadata, visual review, and evaluation on open or contributor-created data.
+Tree tagging usually happens in remote or low-connectivity areas. Users capture the tree image and location first. Later, when internet connectivity is available, the captured assets are synced and edited with details such as species, age, date of plantation, and related information. After review and approval, the tree record becomes a blockchain-based tree asset.
 
-## Scope
+## Current Tree Tagging Flow
 
-The implementation should include:
+The tree asset creation process broadly follows three steps:
 
-- local upload or folder-based ingestion of tree images
-- support for open, synthetic, or contributor-created images
-- tree detection in single-tree and multi-tree scenes
-- bounding box and/or segmentation mask output
-- confidence scores for detections where supported
-- output metadata per image and per detected tree
-- visual output generation showing detected trees
-- lightweight review UI, static gallery, or notebook for inspection
-- evaluation script using labeled examples where available
-- documentation for setup, usage, assumptions, and limitations
+1. A user captures a tree image and geo-tag in the mobile app or mobile browser, often in offline mode.
+2. The asset is synced later and edited with details such as species, age, plantation date, and other metadata.
+3. The asset goes through an approval step before becoming a blockchain-based asset.
 
-## Non-Goals
+This process works, but it depends heavily on the quality of the image and whether the captured image actually contains a valid tree.
 
-This work packet is not intended to cover:
+## Problem Statement
 
-- private field imagery or customer datasets
-- production forestry inventory accuracy
-- internal Canopy architecture or roadmap implementation
-- species identification
-- health classification
-- tree re-identification across visits
-- carbon estimation or ESG reporting
-- broad geospatial analytics platform work
+During tree tagging, users may accidentally capture non-tree images, unclear images, partial tree images, or images where multiple trees and background objects are mixed together.
 
-## Expected Deliverables
+If a non-tree image or poor-quality image passes through the tagging and approval process, it can become an incorrect tree asset. This affects asset quality and can also affect downstream carbon or GHG offset estimates.
 
-A complete contribution should include:
+FloCard is exploring an AI-assisted workflow where tree images captured during the tagging process can be checked to confirm whether a tree is present and where the tree appears in the image.
 
-- working local detection pipeline or notebook
-- sample open/synthetic/contributor-created images or download instructions
-- detection output schema
-- generated sample detections
-- visual review gallery, notebook, or lightweight UI
-- evaluation script and sample evaluation output where labels exist
-- setup and running documentation
-- notes on assumptions, failure cases, and limitations
-- notes on how the output could later be consumed by other tree analytics workflows
+## Challenge Objective
 
-## Success Criteria
+Build a solution that can detect and localize visible trees in uploaded images.
 
-A submission will be considered successful if:
+The solution should help identify whether a submitted image contains one or more trees and provide a reviewable location output such as a bounding box or segmentation mask.
 
-- it runs locally without private internal APIs
-- it uses open, synthetic, or contributor-created imagery only
-- it detects visible trees in sample images
-- it produces bounding boxes and/or masks with traceable metadata
-- visual outputs can be reviewed by a human
-- evaluation metrics are reported when labeled data is available
-- failures and uncertain detections are documented honestly
+## Expected Outcome
+
+A useful solution should be able to:
+
+- accept tree tagging images as input
+- identify whether one or more trees are visible
+- localize detected trees using bounding boxes, masks, or another reviewable format
+- flag unclear or low-confidence images
+- generate metadata for each detection
+- provide a simple way to review detected outputs
+- document the approach, assumptions, limitations, and failure cases
+
+## Suggested Approach
+
+Contributors are free to propose their own approach.
+
+Possible approaches may include:
+
+- object detection models
+- image segmentation models
+- vision transformer based detection
+- YOLO-style models
+- Segment Anything style workflows
+- hybrid detection and quality-check workflows
+
+The solution should explain why the selected approach is suitable and what kinds of images it may fail on.
 
 ## Suggested Stack
 
-Preferred stack:
+Preferred languages:
 
 - Python
-- OpenCV / Pillow
-- YOLO, Detectron2, MMDetection, Segment Anything, or similar open tooling
-- COCO-style annotations where useful
-- Streamlit, Gradio, static HTML, or notebook-based review where useful
-- JSON, JSONL, or CSV for detection outputs
+- C#
 
-## Output Contract
+Possible libraries and tools:
 
-The implementation should export detection results in a documented format. A useful minimal shape is:
+- OpenCV
+- Pillow
+- PyTorch
+- TensorFlow
+- YOLO
+- Detectron2
+- Segment Anything
+- ONNX Runtime
+- ML.NET where applicable
 
-```json
-{
-  "image_id": "string",
-  "source_file": "string",
-  "method": "tree_detection_localization",
-  "detections": [
-    {
-      "tree_instance_id": "string",
-      "label": "tree",
-      "confidence": 0.0,
-      "bbox_xyxy": [0, 0, 0, 0],
-      "mask_file": "string",
-      "review_status": "pending | accepted | rejected | edited"
-    }
-  ],
-  "run_metadata": {
-    "model_name": "string",
-    "model_version": "string",
-    "runtime": "local | hosted",
-    "latency_ms": 0
-  }
-}
-```
+Contributors may use other tools if they explain the reasoning.
 
-## Design Notes
+## Data Access
 
-This packet should remain independent. It may export tree crops or region metadata, but it should not require a separate species identification or re-identification project to be useful.
+Images are not included publicly in this repository unless they are open, synthetic, or approved for public use.
 
-The intended flow is:
+Contributors may use:
 
-```text
-Tree image
--> local ingestion
--> detection or segmentation model
--> bounding boxes or masks
--> visual review
--> detection metadata export
-```
+- open-license tree images
+- contributor-created tree images
+- approved sample image packs provided by the maintainers
 
-## Safety and Data Notes
+Contributors who need access to image samples can contact the maintainers by email. Contact [abhijeet@366pitech.com]
 
-Do not include private field imagery, private location data, customer imagery, restricted-license datasets, or internal Canopy data.
+Do not commit private geo-tagged images, precise location data, private farm or project data, credentials, or restricted-license imagery to the repository.
 
-If using public imagery, document the source and license. If using contributor-created imagery, state that it is contributor-created and safe to redistribute.
+## Contribution Guidelines
 
-## Submission Guidelines
-
-- Fork the repository and create a feature branch for your contribution.
-- Submit your work through a pull request against the main repository. Do not submit code, imagery, annotations, or datasets through email, chat, or shared drives.
-- Open an issue first if your proposed approach changes the scope materially, introduces a major dependency, requires a hosted service by default, or needs a different runtime than the one described in this README.
-- Include a short solution approach in the pull request that explains the detection method, model choice, annotation format, design tradeoffs, and known limitations.
-- Include architecture documentation that shows the main components, data flow, configuration files, local storage, and output artifacts. A simple diagram is preferred where useful.
-- Include setup and running instructions that allow a reviewer to run the project from a clean checkout.
-- Include deployment notes, even if the project only runs locally. State the expected runtime, environment variables, model setup, storage paths, and optional services.
-- Include scaling notes that explain what would need to change for larger image sets, batch inference, GPU execution, cloud storage, queues, or managed compute.
-- Include integration notes describing how detection outputs could later feed other tree analytics workflows without depending on hidden internal APIs.
-- Include code documentation for public functions, configuration options, CLI commands, model inputs, data formats, review states, and export formats.
-- Include sample inputs and outputs using open, synthetic, or contributor-created imagery only.
-- Include tests or validation checks for core behavior, such as output schema validation, image loading, detection export, review state handling, and error handling.
-- Include a short quality report or evidence section showing sample runs, known failure cases, and how reviewers should inspect outputs.
-- Keep secrets, credentials, API keys, generated caches, local model files, large generated outputs, and local environment files out of the repository.
-- Add or update `.gitignore` where needed to prevent accidental submission of local data, model artifacts, generated files, or credentials.
-- Use clear commit messages and keep unrelated refactors out of the pull request.
-- The pull request should be reviewable as a standalone contribution: reviewers should not need access to internal roadmaps, private datasets, or proprietary platform details to understand or run it.
+- Fork the repository.
+- Create a feature branch.
+- Submit your Contribution through a pull request.
+- Keep the implementation focused on this challenge.
+- Do not commit private images, precise location data, credentials, or large generated datasets.
+- Include setup and running instructions.
+- Include sample output using safe, open, synthetic, or approved images.
+- Explain your assumptions and known limitations.
+- Mention any additional data you needed or data gaps you found.
+- Document how the solution can be customized and scaled.
 
