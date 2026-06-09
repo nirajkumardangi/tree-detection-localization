@@ -1,0 +1,55 @@
+# ===== Virtual Environment ====
+venv/
+.env/
+
+# ===== Python ====
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ===== Model Weights ====
+models/*.pt
+models/*.pth
+models/*.onnx
+!models/.gitkeep
+
+# ===== Sample Images (if you add real geo-tagged ones) ====
+sample_images/**
+
+# ===== tests ====
+tests/*
+
+# ===== Outputs ====
+outputs/annotated/*
+outputs/metadata/*
+outputs/masks/*
+!outputs/.gitkeep
+
+# ===== IDE ====
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===== OS ====
+.DS_Store
+Thumbs.db
+
+# ===== Logs ====
+*.log
+
+# ===== Large Files ====
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# ===== Credentials ====
+*.env
+*.key
+credentials.json
