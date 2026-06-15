@@ -5,9 +5,6 @@ import os
 
 
 class ImageQualityChecker:
-
-    SUPPORTED_FORMATS = ["JPG", "JPEG", "PNG", "HEIC"]
-
     def __init__(self):
         self.MIN_WIDTH = 280
         self.MIN_HEIGHT = 200
@@ -67,16 +64,10 @@ class ImageQualityChecker:
             return False, None
 
         try:
-            img = Image.open(image_path)
-
-            file_format = img.format.upper()
-
-            if file_format not in self.SUPPORTED_FORMATS:
-                return False, file_format
-
-            img.verify()
-
-            return True, file_format
+            with Image.open(image_path) as img:
+                file_format = img.format.upper() if img.format else "UNKNOWN"
+                img.verify()
+                return True, file_format
 
         except Exception:
             return False, None
