@@ -1,188 +1,290 @@
+# src/quality_checker.py
+
+from pathlib import Path
+
 import cv2
-import numpy as np
-from PIL import Image
-import os
+
+from src.config import (
+    SUPPORTED_FORMATS,
+    MIN_WIDTH,
+    MIN_HEIGHT,
+    BLUR_REJECT_THRESHOLD,
+    BLUR_REVIEW_THRESHOLD,
+    BRIGHTNESS_DARK_THRESHOLD,
+    BRIGHTNESS_BRIGHT_THRESHOLD,
+    CONTRAST_LOW_THRESHOLD,
+)
 
 
-class ImageQualityChecker:
-    def __init__(self):
-        self.MIN_WIDTH = 280
-        self.MIN_HEIGHT = 200
+class QualityChecker:
+    def check(self, image_path: str) -> dict:
+        """
+        Main method to validate image quality.
+        """
 
-    # Blur Detection using Variance of Laplacian
-    def check_blur(self, image):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        flags = []
 
-        blur_score = float(
-            cv2.Laplacian(gray, cv2.CV_64F).var()
-        )
-
-        if blur_score < 50:
-            status = "reject"
-        elif blur_score < 100:
-            status = "review"
-        else:
-            status = "acceptable"
-
-        return blur_score, status
-
-    # Brightness Analysis using Mean Pixel Intensity
-    def check_brightness(self, image):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        brightness_value = float(np.mean(gray))
-
-        if brightness_value < 50:
-            brightness = "dark"
-        elif brightness_value > 200:
-            brightness = "overexposed"
-        else:
-            brightness = "normal"
-
-        return brightness_value, brightness
-
-    # Resolution Check based on Minimum Dimensions
-    def check_resolution(self, image):
-        height, width = image.shape[:2]
-
-        resolution = f"{width}x{height}"
-
-        if (
-            width < self.MIN_WIDTH
-            or height < self.MIN_HEIGHT
-        ):
-            status = "reject"
-        else:
-            status = "acceptable"
-
-        return resolution, status
-
-    # File Validation using PIL
-    def validate_file(self, image_path):
-
-        if not os.path.exists(image_path):
-            return False, None
-
-        try:
-            with Image.open(image_path) as img:
-                file_format = img.format.upper() if img.format else "UNKNOWN"
-                img.verify()
-                return True, file_format
-
-        except Exception:
-            return False, None
-
-    # Main Quality Check Function
-    def check_quality(self, image_path):
-
-        quality_flags = []
-
-        file_valid, file_format = self.validate_file(
-            image_path
-        )
-
-        if not file_valid:
-            return {
-                "file_valid": False,
-                "overall_quality": "FAIL",
-                "quality_flags": [
-                    "invalid_or_corrupt_file"
-                ]
-            }
+        # ----------------------------------
+        # Validate file
+        # ----------------------------------
 
         image = cv2.imread(image_path)
 
         if image is None:
             return {
+                "blur_score": 0,
+                "blur_status": "invalid",
+                "brightness": "invalid",
+                "brightness_value": 0,
+                "contrast": "invalid",
+                "contrast_value": 0,
+                "resolution": "unknown",
+                "resolution_status": "invalid",
+                "file_format": self._get_extension(image_path),
                 "file_valid": False,
                 "overall_quality": "FAIL",
-                "quality_flags": [
-                    "unable_to_read_image"
-                ]
+                "quality_flags": ["corrupt_or_unreadable_file"],
             }
 
-        # Run checks
-        
-        blur_score, blur_status = self.check_blur(
-            image
-        )
+        # ----------------------------------
+        # Validate format
+        # ----------------------------------
 
-        brightness_value, brightness = (
-            self.check_brightness(image)
-        )
+        file_format = self._get_extension(image_path)
 
-        resolution, resolution_status = (
-            self.check_resolution(image)
-        )
+        if file_format not in SUPPORTED_FORMATS:
+            flags.append("unsupported_format")
 
-       # Flags for borderline cases
+        # ----------------------------------
+        # Resolution Check
+        # ----------------------------------
 
-        if blur_status == "reject":
-            quality_flags.append("very_blurry")
+        height, width = image.shape[:2]
 
-        elif blur_status == "review":
-            quality_flags.append("slightly_blurry")
+        resolution = f"{width}x{height}"
 
-        if brightness == "dark":
-            quality_flags.append("low_brightness")
+        if width < MIN_WIDTH or height < MIN_HEIGHT:
+            resolution_status = "reject"
+            flags.append("resolution_too_low")
+        else:
+            resolution_status = "acceptable"
 
-        if brightness == "overexposed":
-            quality_flags.append("overexposed")
+        # ----------------------------------
+        # Blur Check
+        # ----------------------------------
 
-        if resolution_status == "reject":
-            quality_flags.append("low_resolution")
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        # Determine overall quality
+        blur_score = cv2.Laplacian(
+            gray,
+            cv2.CV_64F
+        ).var()
 
-        if (
-            blur_status == "reject"
-            or resolution_status == "reject"
-        ):
+        if blur_score < BLUR_REJECT_THRESHOLD:
+            blur_status = "reject"
+            flags.append("very_blurry")
+
+        elif blur_score < BLUR_REVIEW_THRESHOLD:
+            blur_status = "review"
+            flags.append("slightly_blurry")
+
+        else:
+            blur_status = "acceptable"
+
+        # ----------------------------------
+        # Brightness Check
+        # ----------------------------------
+
+        brightness_value = float(gray.mean())
+
+        if brightness_value < BRIGHTNESS_DARK_THRESHOLD:
+            brightness_status = "too_dark"
+            flags.append("too_dark")
+
+        elif brightness_value > BRIGHTNESS_BRIGHT_THRESHOLD:
+            brightness_status = "too_bright"
+            flags.append("overexposed")
+
+        else:
+            brightness_status = "normal"
+
+        # ----------------------------------
+        # Contrast Check
+        # ----------------------------------
+
+        contrast_value = float(gray.std())
+
+        if contrast_value < CONTRAST_LOW_THRESHOLD:
+            contrast_status = "low"
+            flags.append("low_contrast")
+
+        else:
+            contrast_status = "normal"
+
+        # ----------------------------------
+        # Overall Quality
+        # ----------------------------------
+
+        critical_flags = {
+            "very_blurry",
+            "resolution_too_low",
+        }
+
+        if any(flag in critical_flags for flag in flags):
             overall_quality = "FAIL"
 
-        elif len(quality_flags) > 0:
+        elif flags:
             overall_quality = "REVIEW"
 
         else:
             overall_quality = "PASS"
 
+        # ----------------------------------
+        # Final Response
+        # ----------------------------------
+
         return {
-            "blur_score": round(
-                blur_score, 2
-            ),
+            "blur_score": round(float(blur_score), 2),
             "blur_status": blur_status,
-
-            "brightness": brightness,
-            "brightness_value": round(
-                brightness_value, 2
-            ),
-
+            "brightness": brightness_status,
+            "brightness_value": round(brightness_value, 2),
+            "contrast": contrast_status,
+            "contrast_value": round(contrast_value, 2),
             "resolution": resolution,
-            "resolution_status":
-                resolution_status,
-
+            "resolution_status": resolution_status,
             "file_format": file_format,
             "file_valid": True,
-
-            "overall_quality":
-                overall_quality,
-
-            "quality_flags":
-                quality_flags
+            "overall_quality": overall_quality,
+            "quality_flags": flags,
         }
 
+    @staticmethod
+    def _get_extension(image_path: str) -> str:
+        return Path(image_path).suffix.lower().replace(".", "")
 
-# ---------------------------
-# Example Usage
-# ---------------------------
-if __name__ == "__main__":
+    def check_frame(self, image) -> dict:
+        """
+        Run quality checks on an in-memory BGR numpy array (live webcam frame).
+        Skips file-format validation since the frame is not from a file.
+        """
 
-    image_path = "sample_images/test_trees/high_contrast.png"
+        flags = []
 
-    checker = ImageQualityChecker()
+        if image is None or image.size == 0:
+            return {
+                "blur_score": 0,
+                "blur_status": "invalid",
+                "brightness": "invalid",
+                "brightness_value": 0,
+                "contrast": "invalid",
+                "contrast_value": 0,
+                "resolution": "unknown",
+                "resolution_status": "invalid",
+                "file_format": "frame",
+                "file_valid": False,
+                "overall_quality": "FAIL",
+                "quality_flags": ["invalid_frame"],
+            }
 
-    result = checker.check_quality(
-        image_path
-    )
+        # ----------------------------------
+        # Resolution Check
+        # ----------------------------------
 
-    print(result)
+        height, width = image.shape[:2]
+
+        resolution = f"{width}x{height}"
+
+        if width < MIN_WIDTH or height < MIN_HEIGHT:
+            resolution_status = "reject"
+            flags.append("resolution_too_low")
+        else:
+            resolution_status = "acceptable"
+
+        # ----------------------------------
+        # Blur Check
+        # ----------------------------------
+
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        blur_score = cv2.Laplacian(
+            gray,
+            cv2.CV_64F
+        ).var()
+
+        if blur_score < BLUR_REJECT_THRESHOLD:
+            blur_status = "reject"
+            flags.append("very_blurry")
+
+        elif blur_score < BLUR_REVIEW_THRESHOLD:
+            blur_status = "review"
+            flags.append("slightly_blurry")
+
+        else:
+            blur_status = "acceptable"
+
+        # ----------------------------------
+        # Brightness Check
+        # ----------------------------------
+
+        brightness_value = float(gray.mean())
+
+        if brightness_value < BRIGHTNESS_DARK_THRESHOLD:
+            brightness_status = "too_dark"
+            flags.append("too_dark")
+
+        elif brightness_value > BRIGHTNESS_BRIGHT_THRESHOLD:
+            brightness_status = "too_bright"
+            flags.append("overexposed")
+
+        else:
+            brightness_status = "normal"
+
+        # ----------------------------------
+        # Contrast Check
+        # ----------------------------------
+
+        contrast_value = float(gray.std())
+
+        if contrast_value < CONTRAST_LOW_THRESHOLD:
+            contrast_status = "low"
+            flags.append("low_contrast")
+
+        else:
+            contrast_status = "normal"
+
+        # ----------------------------------
+        # Overall Quality
+        # ----------------------------------
+
+        critical_flags = {
+            "very_blurry",
+            "resolution_too_low",
+        }
+
+        if any(flag in critical_flags for flag in flags):
+            overall_quality = "FAIL"
+
+        elif flags:
+            overall_quality = "REVIEW"
+
+        else:
+            overall_quality = "PASS"
+
+        # ----------------------------------
+        # Final Response
+        # ----------------------------------
+
+        return {
+            "blur_score": round(float(blur_score), 2),
+            "blur_status": blur_status,
+            "brightness": brightness_status,
+            "brightness_value": round(brightness_value, 2),
+            "contrast": contrast_status,
+            "contrast_value": round(contrast_value, 2),
+            "resolution": resolution,
+            "resolution_status": resolution_status,
+            "file_format": "frame",
+            "file_valid": True,
+            "overall_quality": overall_quality,
+            "quality_flags": flags,
+        }
