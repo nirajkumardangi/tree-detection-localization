@@ -19,7 +19,7 @@ models/*.onnx
 !models/.gitkeep
 
 # ===== Sample Images (if you add real geo-tagged ones) ====
-sample_images/**
+images/**
 
 # ===== tests ====
 tests/*

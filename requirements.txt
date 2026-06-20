@@ -4,7 +4,7 @@ Pillow>=9.0.0
 opencv-python>=4.7.0
 
 # ===== Machine Learning ====
-# torch>=2.0.0
+torch>=2.0.0
 torchvision>=0.15.0
 ultralytics>=8.0.0      # YOLOv8
 
@@ -12,7 +12,7 @@ ultralytics>=8.0.0      # YOLOv8
 # Option 1: Segment Anything
 segment-anything>=1.0
 
-# ===== API (For Day 6) ====
+# ===== API ====
 fastapi>=0.95.0
 uvicorn>=0.21.0
 python-multipart>=0.0.6  # For file uploads
