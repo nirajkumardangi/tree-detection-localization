@@ -1,5 +1,3 @@
-# src/quality_checker.py
-
 from pathlib import Path
 
 import cv2
@@ -24,10 +22,9 @@ class QualityChecker:
 
         flags = []
 
-        # ----------------------------------
+        
         # Validate file
-        # ----------------------------------
-
+        
         image = cv2.imread(image_path)
 
         if image is None:
@@ -46,19 +43,17 @@ class QualityChecker:
                 "quality_flags": ["corrupt_or_unreadable_file"],
             }
 
-        # ----------------------------------
+       
         # Validate format
-        # ----------------------------------
-
+        
         file_format = self._get_extension(image_path)
 
         if file_format not in SUPPORTED_FORMATS:
             flags.append("unsupported_format")
 
-        # ----------------------------------
+       
         # Resolution Check
-        # ----------------------------------
-
+      
         height, width = image.shape[:2]
 
         resolution = f"{width}x{height}"
@@ -69,10 +64,9 @@ class QualityChecker:
         else:
             resolution_status = "acceptable"
 
-        # ----------------------------------
+       
         # Blur Check
-        # ----------------------------------
-
+        
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         blur_score = cv2.Laplacian(
@@ -91,9 +85,8 @@ class QualityChecker:
         else:
             blur_status = "acceptable"
 
-        # ----------------------------------
+        
         # Brightness Check
-        # ----------------------------------
 
         brightness_value = float(gray.mean())
 
@@ -108,9 +101,8 @@ class QualityChecker:
         else:
             brightness_status = "normal"
 
-        # ----------------------------------
+       
         # Contrast Check
-        # ----------------------------------
 
         contrast_value = float(gray.std())
 
@@ -121,9 +113,8 @@ class QualityChecker:
         else:
             contrast_status = "normal"
 
-        # ----------------------------------
+
         # Overall Quality
-        # ----------------------------------
 
         critical_flags = {
             "very_blurry",
@@ -139,9 +130,8 @@ class QualityChecker:
         else:
             overall_quality = "PASS"
 
-        # ----------------------------------
+
         # Final Response
-        # ----------------------------------
 
         return {
             "blur_score": round(float(blur_score), 2),
@@ -161,4 +151,4 @@ class QualityChecker:
     @staticmethod
     def _get_extension(image_path: str) -> str:
         return Path(image_path).suffix.lower().replace(".", "")
-
+
