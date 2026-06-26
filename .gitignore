@@ -6,6 +6,14 @@ venv/
 __pycache__/
 *.py[cod]
 *.so
+# ===== Virtual Environment ====
+venv/
+.env/
+
+# ===== Python ====
+__pycache__/
+*.py[cod]
+*.so
 .Python
 *.egg-info/
 dist/
@@ -13,9 +21,9 @@ build/
 *.egg
 
 # ===== Model Weights ====
-models/*.pt
-models/*.pth
-models/*.onnx
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
 !models/.gitkeep
 
 # ===== Sample Images (if you add real geo-tagged ones) ====
