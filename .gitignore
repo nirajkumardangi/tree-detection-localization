@@ -38,6 +38,9 @@ outputs/metadata/*
 outputs/masks/*
 !outputs/.gitkeep
 
+# ===== uploades ====
+uploads/*
+
 # ===== IDE ====
 .vscode/
 .idea/
