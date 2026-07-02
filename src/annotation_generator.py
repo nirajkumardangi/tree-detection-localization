@@ -90,7 +90,7 @@ class AnnotationGenerator:
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
             (0, 255, 0),
-            3
+            2
         )
 
         filename = (
