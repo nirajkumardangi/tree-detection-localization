@@ -1,0 +1,32 @@
+/* c:\Users\gadge\Desktop\tree-detection-localization\dashboard\css\style.css */
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0d1117;
+}
+::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8b949e;
+}
+
+/* Custom styles and animations */
+.animate-fade-in-up {
+  animation: fadeSlideUp 0.4s ease-out forwards;
+}
+
+/* Keep small uploads from being enlarged into blurry previews. */
+.image-frame img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  image-rendering: auto;
+}
