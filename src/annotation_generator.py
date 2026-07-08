@@ -7,6 +7,9 @@ from src.config import (
 
 
 class AnnotationGenerator:
+    """
+    Class responsible for creating annotated images with bounding boxes, confidence scores and status banner.
+    """
 
     def generate(
         self,
