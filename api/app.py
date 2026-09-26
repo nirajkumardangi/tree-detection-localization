@@ -1,8 +1,8 @@
-from pathlib import Path
+import json
 import shutil
 import uuid
 import logging
-
+from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Tree Detection API",
     description="Real-time and batch tree detection with YOLO + SAM2",
+    version="1.0.0",
 )
 
 # CORS — allow browser dashboard to call the API
@@ -43,9 +44,8 @@ app.add_middleware(
 # Shared resources (loaded once at startup)
 # -------------------------------------------------------
 
-# Full pipeline (includes SAM2) — used for /detect and /capture
+# Full pipeline (includes SAM2) — used for /detect
 pipeline = TreeDetectionPipeline()
-
 
 
 # -------------------------------------------------------
@@ -81,50 +81,17 @@ app.mount(
 )
 
 
-
 # -------------------------------------------------------
-# Dashboard (served at root — must be mounted last)
+# API routes — MUST be registered BEFORE the catch-all
 # -------------------------------------------------------
 
-DASHBOARD_DIR = Path("dashboard")
-if DASHBOARD_DIR.exists():
-    # Mount assets static files
-    if (DASHBOARD_DIR / "assets").exists():
-        app.mount(
-            "/assets",
-            StaticFiles(directory=str(DASHBOARD_DIR / "assets")),
-            name="assets",
-        )
-
-    # Serve index.html at root (dashboard)
-    @app.get("/", response_class=FileResponse)
-    async def serve_dashboard():
-        return FileResponse(str(DASHBOARD_DIR / "index.html"))
-
-    # Serve upload dashboard page
-    @app.get("/upload", response_class=FileResponse)
-    async def serve_upload_dashboard():
-        return FileResponse(str(DASHBOARD_DIR / "index.html"))
-
-    # Catch-all route to serve the React SPA
-    @app.get("/{catchall:path}", response_class=FileResponse)
-    async def serve_react_app(catchall: str):
-        return FileResponse(str(DASHBOARD_DIR / "index.html"))
-
-
-# -------------------------------------------------------
 # Health check
-# -------------------------------------------------------
-
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 
-# -------------------------------------------------------
-# POST /detect — Full pipeline (existing, preserved)
-# -------------------------------------------------------
-
+# POST /detect — Full pipeline
 @app.post("/detect")
 async def detect_tree(
     file: UploadFile = File(...)
@@ -155,10 +122,7 @@ async def detect_tree(
     }
 
 
-# -------------------------------------------------------
-# GET /results — List metadata results (existing, preserved)
-# -------------------------------------------------------
-
+# GET /results — List metadata results
 @app.get("/results")
 def list_results():
     metadata_dir = Path("outputs/metadata")
@@ -169,12 +133,7 @@ def list_results():
     }
 
 
-# -------------------------------------------------------
-# GET /results/{file_name} — Get specific result (existing, preserved)
-# -------------------------------------------------------
-
-import json
-
+# GET /results/{file_name} — Get specific result
 @app.get("/results/{file_name}")
 def get_result(file_name: str):
     file_path = Path("outputs/metadata") / file_name
@@ -183,3 +142,22 @@ def get_result(file_name: str):
     with open(file_path) as f:
         return json.load(f)
 
+
+# -------------------------------------------------------
+# Dashboard (catch-all — MUST be registered LAST)
+# -------------------------------------------------------
+
+DASHBOARD_DIR = Path("dashboard")
+if DASHBOARD_DIR.exists():
+    # Mount assets static files
+    if (DASHBOARD_DIR / "assets").exists():
+        app.mount(
+            "/assets",
+            StaticFiles(directory=str(DASHBOARD_DIR / "assets")),
+            name="assets",
+        )
+
+    # Serve index.html at root (dashboard)
+    @app.get("/", response_class=FileResponse)
+    async def serve_dashboard():
+        return FileResponse(str(DASHBOARD_DIR / "index.html"))

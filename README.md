@@ -1,6 +1,8 @@
-# Tree Detection & Localization System
+# 🌳 Tree Detection & Localization System
 
-AI-powered tree detection and localization pipeline for validating tree-tagging images before they are approved as digital tree assets -- powered by a custom-trained YOLO11 model and SAM2 segmentation, served through a FastAPI backend with a live web dashboard.
+AI-powered tree detection and localization pipeline for validating tree-tagging images before they are approved as digital tree assets — powered by a custom-trained **YOLO11** model and **SAM2** segmentation, served through a **FastAPI** backend with a live web dashboard.
+
+---
 
 ## Table of Contents
 
@@ -24,7 +26,11 @@ AI-powered tree detection and localization pipeline for validating tree-tagging 
 - [Configuration](#configuration)
 - [Known Limitations](#known-limitations)
 - [Future Improvements](#future-improvements)
+- [Technical Approach](#technical-approach)
 - [Security & .gitignore](#security--gitignore)
+- [Contributing](#contributing)
+- [License](#license)
+- [Author](#author)
 
 ---
 
@@ -37,7 +43,7 @@ This project provides an automated image validation and tree detection workflow 
 - **Pixel-level segmentation masks** for each tree
 - **Image quality assessment** (blur, brightness, contrast, resolution)
 - **Detection confidence score**
-- Final **validation verdict** -> `PASS` / `REVIEW` / `REJECT`
+- Final **validation verdict** → `PASS` / `REVIEW` / `REJECT`
 
 The goal is to improve **digital tree asset quality** by preventing non-tree, low-quality, or ambiguous images from entering the approval workflow.
 
@@ -90,18 +96,18 @@ graph TD
     end
 
     Web <-->|POST /detect & HTTP GET| API
-    Mobile --->|POST /detect| API
+    Mobile -->|POST /detect| API
     
-    API --->|Orchestrates| Pipeline
-    QC ---> TD
-    TD ---> SAM
-    SAM ---> Scorer
-    Scorer ---> Annotator
-    Annotator ---> MetaGen
+    API -->|Orchestrates| Pipeline
+    QC --> TD
+    TD --> SAM
+    SAM --> Scorer
+    Scorer --> Annotator
+    Annotator --> MetaGen
     
-    MetaGen ---> AnnOut
-    MetaGen ---> MaskOut
-    MetaGen ---> MetaOut
+    MetaGen --> AnnOut
+    MetaGen --> MaskOut
+    MetaGen --> MetaOut
 ```
 
 ### Architecture Diagram
@@ -168,7 +174,7 @@ flowchart TD
     Cond1 -- No --> TD[YOLO11 Tree Detection]
     
     TD --> TD_Detail["Model: best.pt
-Conf threshold: 0.40
+Conf threshold: 0.30
 Max detections: 100"]
     TD_Detail --> Cond2{Tree Detected?}
     
@@ -183,9 +189,9 @@ Max detections: 100"]
     
     Scorer --> Scorer_Detail["Inputs: Quality, Conf, Area %, Count
 Thresholds:
-- PASS: conf >= 0.75 & Quality PASS & no flags
-- REVIEW: conf >= 0.50
-- REJECT: conf < 0.50"]
+- PASS: conf >= 0.60 & Quality PASS & no flags
+- REVIEW: conf >= 0.30
+- REJECT: conf < 0.30"]
     
     Scorer_Detail --> Annotator[Annotation Generator]
     Annotator --> Annotator_Detail["- Bounding boxes
@@ -217,7 +223,7 @@ The YOLO11 model was trained on a **large-scale, custom curated dataset** built 
 | Negative (Non-Tree) Images | **5,000+** |
 | **Total** | **~55,000 images** |
 
-### Positive Dataset -- Tree Classes
+### Positive Dataset — Tree Classes
 
 The positive dataset includes diverse tree types and conditions:
 
@@ -230,9 +236,9 @@ The positive dataset includes diverse tree types and conditions:
 - Partial occlusion, partial canopy captures
 - Potted trees
 
-### Negative Dataset -- Hard Negatives
+### Negative Dataset — Hard Negatives
 
-The negative dataset contains **5,000+ hard negative images** -- visually complex images that the model could easily confuse with trees. This is critical to reduce false positives:
+The negative dataset contains **5,000+ hard negative images** — visually complex images that the model could easily confuse with trees. This is critical to reduce false positives:
 
 | Negative Category | Description |
 |---|---|
@@ -260,8 +266,8 @@ The negative dataset contains **5,000+ hard negative images** -- visually comple
 |---|---|
 | Base Model | **YOLO11** (Ultralytics) |
 | Training Epochs | 50 |
-| Image Size | 640x640 |
-| Classes | 0 (`tree`) |
+| Image Size | 640×640 |
+| Classes | 1 (`tree`) |
 | Framework | PyTorch + Ultralytics |
 
 ### Training Metrics
@@ -277,12 +283,12 @@ The negative dataset contains **5,000+ hard negative images** -- visually comple
 
 The training graphs show:
 
-- **train/box_loss, cls_loss, dfl_loss** -- Smooth, consistent downward curves over 50 epochs, indicating stable learning without overfitting.
-- **val/box_loss, val/cls_loss, val/dfl_loss** -- Validation losses converge and stabilize, confirming good generalization to unseen images.
-- **Precision curve** -- Rises sharply and plateaus at **~0.94**, confirming high accuracy in positive detections.
-- **Recall curve** -- Steadily increases to ~0.89, indicating the model successfully finds most trees.
-- **mAP@50** -- Reaches ~0.94-0.95, excellent object detection performance.
-- **mAP@50-95** -- Reaches ~0.74, showing strong performance even at stricter IoU thresholds.
+- **train/box_loss, cls_loss, dfl_loss** — Smooth, consistent downward curves over 50 epochs, indicating stable learning without overfitting.
+- **val/box_loss, val/cls_loss, val/dfl_loss** — Validation losses converge and stabilize, confirming good generalization to unseen images.
+- **Precision curve** — Rises sharply and plateaus at **~0.94**, confirming high accuracy in positive detections.
+- **Recall curve** — Steadily increases to ~0.89, indicating the model successfully finds most trees.
+- **mAP@50** — Reaches ~0.94-0.95, excellent object detection performance.
+- **mAP@50-95** — Reaches ~0.74, showing strong performance even at stricter IoU thresholds.
 
 ### Training Metrics Plot
 ![Training Metrics](docs/images/results.png)
@@ -304,7 +310,7 @@ Pre-checks images before AI inference to avoid wasting compute:
 | Blur | Laplacian Variance | reject < 50, review < 100 |
 | Brightness | Grayscale Mean | dark < 40, overexposed > 220 |
 | Contrast | Grayscale Std Dev | low < 20 |
-| Resolution | Pixel Dimensions | min 480x480 |
+| Resolution | Pixel Dimensions | min 480×480 |
 | File Format | Extension check | JPG, JPEG, PNG, HEIC |
 | Corruption | OpenCV read check | cannot read = FAIL |
 
@@ -333,7 +339,7 @@ Detects visible trees using the custom-trained `best.pt` model:
 - Detects single and multiple trees
 - Produces bounding boxes (`x_min, y_min, x_max, y_max`)
 - Assigns confidence score per detection
-- Minimum confidence threshold: **0.40**
+- Minimum confidence threshold: **0.30**
 
 **Output:**
 ```json
@@ -377,30 +383,32 @@ Combines quality + detection + segmentation into a final verdict:
 | Condition | Status |
 |---|---|
 | No tree detected | `REJECT` |
-| Quality FAIL | `REJECT` |
-| Confidence >= 0.75 AND Quality PASS AND no flags | `PASS` |
-| Confidence >= 0.50 | `REVIEW` |
-| Confidence < 0.50 | `REJECT` |
+| Confidence ≥ 0.60 AND Quality = PASS AND no flags | `PASS` |
+| Confidence ≥ 0.30 | `REVIEW` |
+| Confidence < 0.30 | `REJECT` |
 
 ### 5. Annotation Generation
 
 Draws visual output overlays on the original image:
 - Bounding boxes around detected trees
-- Segmentation mask overlay (semi-transparent)
+- Segmentation mask overlay (semi-transparent green)
 - Confidence score label per tree
 - Validation status banner (PASS / REVIEW / REJECT)
 
 ### 6. Metadata Generation
 
-Creates a structured JSON file saved to `outputs/metadata/`.
+Creates a structured JSON file saved to `outputs/metadata/` containing quality, detection, segmentation, and scoring results.
 
 ### 7. Web Dashboard
 
 A live review dashboard served at `http://localhost:8000`:
-- Upload images directly from browser
-- View annotated results in real time
-- Browse past detection results
-- Built with HTML, JavaScript, Bootstrap
+- Drag-and-drop or click-to-upload images
+- Side-by-side original vs annotated comparison
+- Real-time detection metrics (tree count, confidence, quality, validation status)
+- Detailed detection table with bounding box coordinates
+- Quality breakdown pills
+- Direct links to annotated images and JSON metadata
+- Built with HTML5, JavaScript, and Tailwind CSS
 
 ---
 
@@ -414,12 +422,14 @@ tree-detection-localization/
 │
 ├── dashboard/
 │   ├── index.html              # Review dashboard UI
-│   ├── css/                    # Dashboard styles
-│   └── js/                     # Dashboard scripts
+│   ├── css/
+│   │   └── style.css           # Custom styles
+│   └── js/
+│       └── app.js              # Dashboard client logic
 │
 ├── docs/
 │   ├── approach.md             # Detailed technical approach documentation
-│   └── images/                 # Architecture diagrams
+│   └── images/                 # Architecture diagrams & training plots
 │
 ├── models/
 │   ├── best.pt                 # Custom YOLO11 weights (not committed to Git)
@@ -427,8 +437,8 @@ tree-detection-localization/
 │   │   ├── checkpoints/
 │   │   │   └── sam2.1_hiera_small.pt  # SAM2 weights (not committed to Git)
 │   │   └── configs/
-│   │       └── sam2.1_hiera_s.yaml    # SAM2 config (committed)
-│   └── sam2_repo/              # SAM2 source repo (not committed)
+│   │       └── sam2.1_hiera_s.yaml    # SAM2 config
+│   └── sam2_repo/              # SAM2 source repo (cloned at setup)
 │
 ├── outputs/
 │   ├── annotated/              # Annotated output images
@@ -436,7 +446,7 @@ tree-detection-localization/
 │   └── metadata/               # JSON detection results
 │
 ├── src/
-│   ├── __init__.py
+│   ├── __init__.py             # Package exports
 │   ├── config.py               # All thresholds, paths, and configuration
 │   ├── pipeline.py             # Main orchestration pipeline
 │   ├── quality_checker.py      # Image quality validation module
@@ -444,13 +454,16 @@ tree-detection-localization/
 │   ├── segmentation.py         # SAM2 segmentation module
 │   ├── confidence_scorer.py    # Scoring and validation logic
 │   ├── annotation_generator.py # Output image annotation
-│   └── metadata_generator.py  # JSON metadata output
+│   └── metadata_generator.py   # JSON metadata output
 │
 ├── uploads/                    # Temporary image upload storage
 │
-├── .gitignore
-├── README.md
-└── requirements.txt
+├── .gitignore                  # Git exclusions
+├── LICENSE                     # MIT License
+├── objectives.md               # Challenge objectives
+├── README.md                   # This file
+├── requirements.txt            # Python dependencies
+└── run.py                      # Convenience entry point
 ```
 
 ---
@@ -480,8 +493,9 @@ tree-detection-localization/
 | Technology | Purpose |
 |---|---|
 | **HTML5** | Dashboard structure |
-| **JavaScript** | Client-side logic |
-| **Bootstrap** | UI components and layout |
+| **JavaScript (ES6+)** | Client-side logic |
+| **Tailwind CSS** (CDN) | Utility-first styling |
+| **Inter** (Google Fonts) | Typography |
 
 ---
 
@@ -504,7 +518,7 @@ venv\Scripts\activate
 
 **Linux / macOS:**
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 
@@ -582,6 +596,15 @@ print(result["metadata"])        # Path to JSON metadata
 
 ## Running the API & Dashboard
 
+### Option 1: Using the convenience entry point
+
+```bash
+python run.py
+python run.py --host 0.0.0.0 --port 8000 --reload
+```
+
+### Option 2: Using uvicorn directly
+
 ```bash
 uvicorn api.app:app --reload
 ```
@@ -593,6 +616,8 @@ uvicorn api.app:app --reload
 | Health Check | http://localhost:8000/health |
 
 ---
+
+
 
 ## API Endpoints
 
@@ -619,7 +644,7 @@ curl -X POST http://localhost:8000/detect \
 {
   "image_id": "a3f1c20d-4e92-4a7b-b8c1-1234567890ab",
   "status": "PASS",
-  "annotated_image": "outputs/annotated/a3f1c20d.jpg",
+  "annotated_image": "outputs/annotated/a3f1c20d_annotated.jpg",
   "metadata": "outputs/metadata/a3f1c20d.json"
 }
 ```
@@ -628,13 +653,8 @@ curl -X POST http://localhost:8000/detect \
 
 ```json
 {
-  "image_id": "a3f1c20d-...",
-  "validation_status": "PASS",
-  "tree_detected": true,
-  "tree_count": 1,
-  "confidence": 0.8731,
+  "image_name": "a3f1c20d.jpg",
   "quality": {
-    "overall_quality": "PASS",
     "blur_score": 145.6,
     "blur_status": "acceptable",
     "brightness": "normal",
@@ -643,26 +663,39 @@ curl -X POST http://localhost:8000/detect \
     "contrast_value": 58.4,
     "resolution": "1920x1080",
     "resolution_status": "acceptable",
+    "file_format": "jpg",
     "file_valid": true,
+    "overall_quality": "PASS",
     "quality_flags": []
   },
-  "detections": [
-    {
-      "detection_id": 1,
-      "class_label": "tree",
-      "confidence": 0.8731,
-      "bounding_box": {
-        "x_min": 120, "y_min": 80, "x_max": 640, "y_max": 720
+  "detection": {
+    "tree_detected": true,
+    "tree_count": 1,
+    "detections": [
+      {
+        "detection_id": 1,
+        "class_label": "tree",
+        "confidence": 0.8731,
+        "bounding_box": {
+          "x_min": 120, "y_min": 80, "x_max": 640, "y_max": 720
+        }
       }
-    }
-  ],
+    ]
+  },
   "segmentation": {
     "mask_available": true,
     "tree_area_pixels": 320000,
     "image_total_pixels": 2073600,
-    "tree_area_percentage": 15.43
+    "tree_area_percentage": 15.43,
+    "mask_files": ["outputs/masks/a3f1c20d_mask_1.png"],
+    "mask_file": "outputs/masks/a3f1c20d_mask_1.png"
   },
-  "flags": []
+  "score": {
+    "validation_status": "PASS",
+    "confidence": 0.8731,
+    "flags": []
+  },
+  "annotated_image": "outputs/annotated/a3f1c20d_annotated.jpg"
 }
 ```
 
@@ -672,20 +705,20 @@ curl -X POST http://localhost:8000/detect \
 
 | Status | Criteria |
 |---|---|
-| **PASS** | Confidence >= 0.75 AND Quality = PASS AND no warning flags |
-| **REVIEW** | Confidence >= 0.50 (with optional flags) |
-| **REJECT** | No tree detected OR confidence < 0.50 OR quality = FAIL |
+| **PASS** | Confidence ≥ 0.60 AND Quality = PASS AND no warning flags |
+| **REVIEW** | Confidence ≥ 0.30 (with optional flags) |
+| **REJECT** | No tree detected OR confidence < 0.30 OR quality = FAIL |
 
 ### Validation Flags
 
 | Flag | Meaning |
 |---|---|
 | `no_tree_detected` | YOLO found no trees |
-| `tree_too_small` | Tree area < 10% of image |
+| `tree_too_small` | Tree area < 5% of image |
 | `poor_image_quality` | Quality check returned FAIL |
 | `multiple_trees_detected` | More than one tree found |
 | `very_blurry` | Blur score < 50 |
-| `resolution_too_low` | Image smaller than 480x480 |
+| `resolution_too_low` | Image smaller than 480×480 |
 | `too_dark` | Brightness mean < 40 |
 | `overexposed` | Brightness mean > 220 |
 | `low_contrast` | Contrast std dev < 20 |
@@ -694,21 +727,25 @@ curl -X POST http://localhost:8000/detect \
 
 ## Configuration
 
-All thresholds and paths are centralized in `src/config.py`:
+All thresholds and paths are centralized in [`src/config.py`](src/config.py):
 
 ```python
 # Model paths
 MODEL_PATH = "models/best.pt"
 SAM2_CHECKPOINT = "models/sam2/checkpoints/sam2.1_hiera_small.pt"
+SAM2_CONFIG = "configs/sam2.1/sam2.1_hiera_s"
 
 # Detection
-MIN_DETECTION_CONFIDENCE = 0.40
+MIN_DETECTION_CONFIDENCE = 0.30
 MAX_DETECTIONS = 100
 
+# SAM2
+USE_SAM2 = True
+
 # Scoring thresholds
-PASS_CONFIDENCE = 0.75
-REVIEW_CONFIDENCE = 0.50
-MIN_TREE_AREA_PERCENTAGE = 10
+PASS_CONFIDENCE = 0.60
+REVIEW_CONFIDENCE = 0.30
+MIN_TREE_AREA_PERCENTAGE = 5
 
 # Quality thresholds
 MIN_WIDTH = 480
@@ -718,6 +755,11 @@ BLUR_REVIEW_THRESHOLD = 100
 BRIGHTNESS_DARK_THRESHOLD = 40
 BRIGHTNESS_BRIGHT_THRESHOLD = 220
 CONTRAST_LOW_THRESHOLD = 20
+
+# Output directories
+ANNOTATED_OUTPUT_DIR = "outputs/annotated"
+METADATA_OUTPUT_DIR = "outputs/metadata"
+MASK_OUTPUT_DIR = "outputs/masks"
 ```
 
 ---
@@ -728,20 +770,31 @@ CONTRAST_LOW_THRESHOLD = 20
 - Small saplings may **not be detected** reliably at minimum thresholds
 - Night-time images or images with heavy shadows reduce detection accuracy
 - Heavy occlusion may impact SAM2 segmentation quality
-- The model was trained primarily on **outdoor field photos**
+- The model was trained primarily on **outdoor field photos** — aerial/drone views may underperform
+- CPU inference is significantly slower (~5-15s per image vs ~50ms on GPU)
+- Single image per API request (no batch processing yet)
 
 ---
 
 ## Future Improvements
 
-- Tree Species Classification - multi-class YOLO model
-- Height Estimation - using depth estimation models
-- Carbon Sequestration Estimation - area + species-based calculation
-- Geospatial Validation - GPS coordinate cross-checking
-- ONNX Model Export - for edge device inference
-- Mobile / On-Device Inference - TFLite or CoreML deployment
-- Batch Processing API - process multiple images in one request
-- Webhook Callbacks - async result delivery
+- 🌿 **Tree Species Classification** — Multi-class YOLO model
+- 📏 **Height Estimation** — Using depth estimation models
+- 🌍 **Carbon Sequestration Estimation** — Area + species-based calculation
+- 📍 **Geospatial Validation** — GPS coordinate cross-checking
+- ⚡ **ONNX Model Export** — For edge device inference
+- 📱 **Mobile / On-Device Inference** — TFLite or CoreML deployment
+- 📦 **Batch Processing API** — Process multiple images in one request
+- 🔔 **Webhook Callbacks** — Async result delivery
+- 🔐 **Authentication** — API key or JWT-based access control
+
+---
+
+## Technical Approach
+
+For a detailed explanation of the technical approach, design decisions, assumptions, limitations, failure cases, and scaling options, see:
+
+📄 **[docs/approach.md](docs/approach.md)**
 
 ---
 
@@ -753,16 +806,43 @@ The following are **excluded from the repository**:
 models/**/*.pt        # Large model weight files
 models/**/*.pth
 models/**/*.onnx
+models/sam2_repo/     # SAM2 source (cloned at setup)
 venv/                 # Python virtual environment
 outputs/annotated/*   # Generated output images
 outputs/masks/*
 outputs/metadata/*
+uploads/*             # Uploaded images
 images/**             # Sample / test images
 *.env                 # Environment variable files
 credentials.json
 ```
 
-> Never commit model weights, geo-tagged images, farm location data, API keys, or credentials.
+> ⚠️ **Never commit** model weights, geo-tagged images, farm location data, API keys, or credentials.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Submit a Pull Request
+
+**Guidelines:**
+- Keep the implementation focused on tree detection and localization
+- Do not commit private images, precise location data, credentials, or large generated datasets
+- Include setup and running instructions for any new features
+- Include sample output using safe, open, synthetic, or approved images
+- Explain your assumptions and known limitations
+
+---
+
+## License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+> **Note:** Model weights trained on proprietary datasets are not covered by this license and are not redistributed. SAM2 model weights are subject to Meta AI's license.
 
 ---
 
@@ -770,9 +850,3 @@ credentials.json
 
 **Niraj Kumar Dangi**
 GitHub: [@nirajkumardangi](https://github.com/nirajkumardangi)
-
----
-
-## License
-
-This project is for internal/research use. Model weights trained on proprietary datasets are not redistributed.

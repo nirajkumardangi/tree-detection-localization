@@ -6,14 +6,6 @@ venv/
 __pycache__/
 *.py[cod]
 *.so
-# ===== Virtual Environment ====
-venv/
-.env/
-
-# ===== Python ====
-__pycache__/
-*.py[cod]
-*.so
 .Python
 *.egg-info/
 dist/
@@ -26,6 +18,9 @@ models/**/*.pth
 models/**/*.onnx
 !models/.gitkeep
 
+# ===== SAM2 Repo (cloned at setup) ====
+models/sam2_repo/
+
 # ===== Sample Images (if you add real geo-tagged ones) ====
 images/**
 
@@ -37,9 +32,13 @@ outputs/annotated/*
 outputs/metadata/*
 outputs/masks/*
 !outputs/.gitkeep
+!outputs/annotated/.gitkeep
+!outputs/metadata/.gitkeep
+!outputs/masks/.gitkeep
 
-# ===== uploades ====
+# ===== Uploads ====
 uploads/*
+!uploads/.gitkeep
 
 # ===== IDE ====
 .vscode/
@@ -64,3 +63,6 @@ Thumbs.db
 *.env
 *.key
 credentials.json
+
+# ===== Docker ====
+docker-compose.override.yml
